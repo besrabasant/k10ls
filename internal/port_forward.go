@@ -66,7 +66,7 @@ func Portforward(ctx *Context, config *Config) {
 	}
 
 	// Load Kubernetes client
-	clientset, restConfig, err := getKubeClient(ctx.KubeConfigPath, config.GlobalKubeConfig)
+	clientset, _, err := getKubeClient(ctx.KubeConfigPath, config.GlobalKubeConfig)
 	if err != nil {
 		logrus.Fatalf("Failed to load KubeClient: %v", err)
 	}
@@ -108,7 +108,7 @@ func Portforward(ctx *Context, config *Config) {
 			if namespace == "" {
 				namespace = ctx.Namespace
 			}
-			err := portForwardLabel(clientset, restConfig, ctx.Name, namespace, sel.Label, sel.Ports, ctx.Address)
+			err := portForwardLabel(clientset, ctx.Name, namespace, sel.Label, sel.Ports, ctx.Address)
 			if err != nil {
 				logrus.Errorf("Error forwarding label selector %s: %v", sel.Label, err)
 			}
@@ -150,6 +150,7 @@ func portForwardResource(context, namespace, resource string, ports []PortMap, a
 	}
 
 	cmdArgs := []string{"--context", context, "port-forward", resource}
+	cmdArgs = append(cmdArgs, "--namespace", namespace)
 	cmdArgs = append(cmdArgs, portMappings...)
 	cmdArgs = append(cmdArgs, "--address", address)
 
@@ -169,7 +170,7 @@ func portForwardResource(context, namespace, resource string, ports []PortMap, a
 }
 
 // portForwardLabel selects pods based on labels and starts port forwarding
-func portForwardLabel(clientset *kubernetes.Clientset, config *rest.Config, ctx, namespace, label string, ports []PortMap, address string) error {
+func portForwardLabel(clientset *kubernetes.Clientset, ctx, namespace, label string, ports []PortMap, address string) error {
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: label,
 	})
@@ -186,37 +187,3 @@ func portForwardLabel(clientset *kubernetes.Clientset, config *rest.Config, ctx,
 	return portForwardResource(ctx, namespace, firstPod.Name, ports, address)
 }
 
-// getPodForService finds a pod that matches a given service's selector
-func getPodForService(clientset *kubernetes.Clientset, namespace, serviceName string) (string, error) {
-	// Fetch the service
-	service, err := clientset.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get service %s: %v", serviceName, err)
-	}
-
-	// Convert selector map to label selector string
-	selectorParts := []string{}
-	for key, value := range service.Spec.Selector {
-		selectorParts = append(selectorParts, fmt.Sprintf("%s=%s", key, value))
-	}
-	selectorString := strings.Join(selectorParts, ",")
-
-	if selectorString == "" {
-		return "", fmt.Errorf("service %s has no selectors", serviceName)
-	}
-
-	// Find matching pods
-	podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: selectorString,
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to list pods for service %s: %v", serviceName, err)
-	}
-
-	if len(podList.Items) == 0 {
-		return "", fmt.Errorf("no pods found for service %s", serviceName)
-	}
-
-	// Return the first pod found
-	return podList.Items[0].Name, nil
-}

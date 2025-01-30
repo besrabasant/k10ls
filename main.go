@@ -11,13 +11,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init()  {
+func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
-		ForceColors: true,
+		ForceColors:   true,
 	})
 }
-
 
 func main() {
 	// Set up CLI and config file handling with Viper
@@ -54,4 +53,3 @@ func main() {
 	// Keep the process alive
 	select {}
 }
-
