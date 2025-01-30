@@ -1,0 +1,10 @@
+global_kubeconfig = "/home/user/.kube/config"
+
+[[context]]
+name = "kind-master"
+address = "0.0.0.0"
+namespace = "default"
+
+[[context.svc]]
+name = "mqtt"
+ports = [{ source = "8883", target = "8883" }, { source = "1883", target = "1883" }]
