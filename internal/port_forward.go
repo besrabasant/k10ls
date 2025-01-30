@@ -149,8 +149,9 @@ func portForwardResource(context, namespace, resource string, ports []PortMap, a
 		portMappings = append(portMappings, fmt.Sprintf("%s:%s", p.Source, p.Target))
 	}
 
-	cmdArgs := []string{"--context", context, "port-forward", resource}
+	cmdArgs := []string{"--context", context}
 	cmdArgs = append(cmdArgs, "--namespace", namespace)
+	cmdArgs = append(cmdArgs, "port-forward", resource)
 	cmdArgs = append(cmdArgs, portMappings...)
 	cmdArgs = append(cmdArgs, "--address", address)
 
