@@ -80,7 +80,13 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: bin
+          path: artifacts
+
+      - name: Move Artifacts to Release Directory
+        run: |
+          mkdir -p bin
+          mv artifacts/*/* bin/
+          ls -R bin  # Debugging to verify files exist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
