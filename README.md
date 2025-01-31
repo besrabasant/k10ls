@@ -22,22 +22,29 @@ This tool provides a **native Kubernetes API-based port-forwarding solution**, a
 - `golangci-lint` (for linting)
 
 ### **Download Binary**
-#### **Linux/macOS**
+#### **Linux**
 ```sh
-curl -LO https://github.com/besrabasant/k10ls/releases/latest/download/k8s-port-forward-linux-amd64
-chmod +x k8s-port-forward-linux-amd64
-mv k8s-port-forward-linux-amd64 /usr/local/bin/k8s-port-forward
+curl -LO https://github.com/besrabasant/k10ls/releases/latest/download/k10ls-v1.0.0-linux-amd64
+chmod +x k10ls-v1.0.0-linux-amd64
+mv k10ls-v1.0.0-linux-amd64 /usr/local/bin/k10ls
+```
+
+#### **macOS**
+```sh
+curl -LO https://github.com/besrabasant/k10ls/releases/latest/download/k10ls-v1.0.0-macos-amd64
+chmod +x k10ls-v1.0.0-macos-amd64
+mv k10ls-v1.0.0-macos-amd64 /usr/local/bin/k10ls
 ```
 
 #### **Windows**
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/besrabasant/k10ls/releases/latest/download/k8s-port-forward-windows-amd64.exe" -OutFile "k8s-port-forward.exe"
+Invoke-WebRequest -Uri "https://github.com/besrabasant/k10ls/releases/latest/download/k10ls--windows-amd64.exe" -OutFile "k10ls.exe"
 ```
 
 ### **Build from Source**
 ```sh
 git clone https://github.com/besrabasant/k10ls.git
-cd k8s-port-forward
+cd k10ls
 make build
 ```
 
