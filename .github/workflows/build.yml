@@ -60,26 +60,9 @@ jobs:
           name: k10ls-${{ env.VERSION }}-${{ runner.os }}-amd64
           path: |
             bin/*
-
-  release:
-    name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Get Version from Tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: bin
-
+            
       - name: Create GitHub Release
+        if: matrix.os == 'ubuntu-latest'  # Run release only once (not for each OS)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION }}
