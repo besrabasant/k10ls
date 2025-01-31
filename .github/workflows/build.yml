@@ -53,7 +53,7 @@ jobs:
           mkdir bin -Force
           $env:GOOS="windows"
           $env:GOARCH="amd64"
-          $OUTPUT_NAME="bin\k10ls-${{ env.VERSION }}-windows-amd64.exe"
+          $OUTPUT_NAME="bin\k10ls-${VERSION}-windows-amd64.exe"
           go build -o $OUTPUT_NAME main.go
           echo "Built: $OUTPUT_NAME"
 
