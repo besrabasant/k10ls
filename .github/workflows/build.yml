@@ -1,0 +1,89 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23"
+
+      - name: Get Version from Tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Install Dependencies
+        run: |
+          go mod tidy
+          go mod download
+
+      - name: Build Binary (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p bin
+          GOOS=$(echo ${{ runner.os }} | awk '{print tolower($0)}')
+          GOARCH=amd64
+          OUTPUT_NAME="bin/k10ls-${VERSION}-${GOOS}-${GOARCH}"
+          go build -o $OUTPUT_NAME main.go
+          chmod +x $OUTPUT_NAME
+          echo "Built: $OUTPUT_NAME"
+
+      - name: Build Binary (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir bin -Force
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          $OUTPUT_NAME="bin\k10ls-${{ env.VERSION }}-windows-amd64.exe"
+          go build -o $OUTPUT_NAME main.go
+          echo "Built: $OUTPUT_NAME"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k10ls-${{ env.VERSION }}-${{ runner.os }}-amd64
+          path: |
+            bin/*
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Version from Tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bin
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+          files: bin/*
