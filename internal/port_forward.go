@@ -99,7 +99,7 @@ func Portforward(ctx *Context, config *Config) {
 				namespace = ctx.Namespace
 			}
 			addr := computeAddress(service.Address, ctx.Address, config.DefaultAddress)
-			err := portForwardResource(clientset, cfg, namespace, "svc/"+service.Name, service.Ports, addr)
+			err := portForwardResource(clientset, cfg, ctx.Name, namespace, "svc/"+service.Name, service.Ports, addr)
 			if err != nil {
 				logrus.Errorf("Error forwarding service %s: %v", service.Name, err)
 			}
@@ -113,7 +113,7 @@ func Portforward(ctx *Context, config *Config) {
 				namespace = ctx.Namespace
 			}
 			addr := computeAddress(pod.Address, ctx.Address, config.DefaultAddress)
-			err := portForwardResource(clientset, cfg, namespace, "pod/"+pod.Name, pod.Ports, addr)
+			err := portForwardResource(clientset, cfg, ctx.Name, namespace, "pod/"+pod.Name, pod.Ports, addr)
 			if err != nil {
 				logrus.Errorf("Error forwarding pod %s: %v", pod.Name, err)
 			}
@@ -127,7 +127,7 @@ func Portforward(ctx *Context, config *Config) {
 				namespace = ctx.Namespace
 			}
 			addr := computeAddress(sel.Address, ctx.Address, config.DefaultAddress)
-			err := portForwardLabel(clientset, cfg, namespace, sel.Label, sel.Ports, addr)
+			err := portForwardLabel(clientset, cfg, ctx.Name, namespace, sel.Label, sel.Ports, addr)
 			if err != nil {
 				logrus.Errorf("Error forwarding label selector %s: %v", sel.Label, err)
 			}
@@ -162,7 +162,7 @@ func getKubeClient(contextName, contextKubeConfig, globalKubeConfig string) (*ku
 	return clientset, config, nil
 }
 
-func portForwardResource(clientset *kubernetes.Clientset, cfg *rest.Config, namespace, resource string, ports []PortMap, address string) error {
+func portForwardResource(clientset *kubernetes.Clientset, cfg *rest.Config, contextName, namespace, resource string, ports []PortMap, address string) error {
 	var podName string
 	if strings.HasPrefix(resource, "svc/") {
 		name := strings.TrimPrefix(resource, "svc/")
@@ -186,11 +186,11 @@ func portForwardResource(clientset *kubernetes.Clientset, cfg *rest.Config, name
 		podName = strings.TrimPrefix(resource, "pod/")
 	}
 
-	go maintainPortForward(cfg, namespace, podName, ports, address)
+	go maintainPortForward(cfg, contextName, namespace, podName, ports, address)
 	return nil
 }
 
-func portForwardLabel(clientset *kubernetes.Clientset, cfg *rest.Config, namespace, label string, ports []PortMap, address string) error {
+func portForwardLabel(clientset *kubernetes.Clientset, cfg *rest.Config, contextName, namespace, label string, ports []PortMap, address string) error {
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return fmt.Errorf("failed to list pods: %v", err)
@@ -199,23 +199,23 @@ func portForwardLabel(clientset *kubernetes.Clientset, cfg *rest.Config, namespa
 		return fmt.Errorf("no pods found with label: %s", label)
 	}
 	podName := pods.Items[0].Name
-	return portForwardResource(clientset, cfg, namespace, "pod/"+podName, ports, address)
+	return portForwardResource(clientset, cfg, contextName, namespace, "pod/"+podName, ports, address)
 }
 
-func maintainPortForward(cfg *rest.Config, namespace, podName string, ports []PortMap, address string) {
+func maintainPortForward(cfg *rest.Config, contextName, namespace, podName string, ports []PortMap, address string) {
 	portArgs := make([]string, len(ports))
 	for i, p := range ports {
 		portArgs[i] = fmt.Sprintf("%s:%s", p.Source, p.Target)
 	}
 	for {
-		if err := startPortForward(cfg, namespace, podName, address, portArgs); err != nil {
+		if err := startPortForward(cfg, contextName, namespace, podName, address, portArgs); err != nil {
 			logrus.Errorf("port-forward failed for %s: %v", podName, err)
 		}
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func startPortForward(cfg *rest.Config, namespace, podName, address string, ports []string) error {
+func startPortForward(cfg *rest.Config, contextName, namespace, podName, address string, ports []string) error {
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, podName)
 	hostIP := strings.TrimPrefix(cfg.Host, "https://")
 	transport, upgrader, err := spdy.RoundTripperFor(cfg)
@@ -235,6 +235,8 @@ func startPortForward(cfg *rest.Config, namespace, podName, address string, port
 	go func() {
 		<-readyCh
 		logrus.Infof("Started port-forward for pod %s on %v", podName, ports)
+		equiv := fmt.Sprintf("kubectl --context %s -n %s port-forward pod/%s %s --address %s", contextName, namespace, podName, strings.Join(ports, " "), address)
+		logrus.Infof("Equivalent kubectl command: %s", equiv)
 	}()
 
 	err = pf.ForwardPorts()
