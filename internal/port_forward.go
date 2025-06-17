@@ -87,7 +87,7 @@ func Portforward(ctx *Context, config *Config) {
 		ctx.Namespace = "default"
 	}
 
-	clientset, cfg, err := getKubeClient(ctx.KubeConfigPath, config.GlobalKubeConfig)
+	clientset, cfg, err := getKubeClient(ctx.Name, ctx.KubeConfigPath, config.GlobalKubeConfig)
 	if err != nil {
 		logrus.Fatalf("Failed to load KubeClient: %v", err)
 	}
@@ -136,14 +136,18 @@ func Portforward(ctx *Context, config *Config) {
 }
 
 // getKubeClient initializes a Kubernetes client
-func getKubeClient(contextKubeConfig, globalKubeConfig string) (*kubernetes.Clientset, *rest.Config, error) {
+func getKubeClient(contextName, contextKubeConfig, globalKubeConfig string) (*kubernetes.Clientset, *rest.Config, error) {
 	var config *rest.Config
 	var err error
 
 	if contextKubeConfig != "" {
-		config, err = clientcmd.BuildConfigFromFlags("", contextKubeConfig)
+		loadingRules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: contextKubeConfig}
+		overrides := &clientcmd.ConfigOverrides{CurrentContext: contextName}
+		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides).ClientConfig()
 	} else if globalKubeConfig != "" {
-		config, err = clientcmd.BuildConfigFromFlags("", globalKubeConfig)
+		loadingRules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: globalKubeConfig}
+		overrides := &clientcmd.ConfigOverrides{CurrentContext: contextName}
+		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides).ClientConfig()
 	} else {
 		config, err = rest.InClusterConfig()
 	}
