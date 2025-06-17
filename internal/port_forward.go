@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -218,10 +219,11 @@ func startPortForward(cfg *rest.Config, namespace, podName, address string, port
 		return err
 	}
 	url := &url.URL{Scheme: "https", Path: path, Host: hostIP}
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 
 	stopCh := make(chan struct{})
 	readyCh := make(chan struct{})
-	pf, err := portforward.NewOnAddresses(transport, upgrader, []string{address}, url, ports, stopCh, readyCh, io.Discard, io.Discard)
+	pf, err := portforward.NewOnAddresses(dialer, []string{address}, ports, stopCh, readyCh, io.Discard, io.Discard)
 	if err != nil {
 		return err
 	}
