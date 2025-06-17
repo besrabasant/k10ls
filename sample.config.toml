@@ -1,10 +1,19 @@
+# Example configuration
+
 global_kubeconfig = "/home/user/.kube/config"
+# Global bind address if not specified elsewhere
+default_address = "0.0.0.0"
 
 [[context]]
 name = "kind-master"
-address = "0.0.0.0"
 namespace = "default"
+# address = "127.0.0.1" # optional per-context
 
 [[context.svc]]
 name = "mqtt"
-ports = [{ source = "8883", target = "8883" }, { source = "1883", target = "1883" }]
+# address = "127.0.0.1" # optional per-service
+ports = [
+  { source = "8883", target = "8883" },
+  { source = "1883", target = "1883" }
+]
+

@@ -62,14 +62,16 @@ This tool reads configuration from a **TOML file**.
 ### **Example Configuration (`config.toml`)**
 ```toml
 global_kubeconfig = "/home/user/.kube/config"
+default_address = "0.0.0.0"
 
 [[context]]
 name = "kind-local"
-address = "0.0.0.0"
 kubeconfig = "/path/to/kubeconfig"
+# address = "127.0.0.1" # optional per context
 
 [[context.svc]]
 name = "mqtt"
+# address = "127.0.0.1" # optional per service
 ports = [{ source = "8883", target = "8883" }, { source = "1883", target = "1883" }]
 
 [[context.pods]]
@@ -148,3 +150,4 @@ go run main.go --debug
 🚀 **Basant Besra**
 📧 besrabasant@gmail.com  
 🐙 [GitHub](https://github.com/besrabasant)
+
