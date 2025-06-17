@@ -8,7 +8,12 @@ require (
 	k8s.io/client-go v0.32.1
 )
 
-require k8s.io/api v0.32.1 // indirect
+require (
+	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/moby/spdystream v0.5.0 // indirect
+	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
+	k8s.io/api v0.32.1 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

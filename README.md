@@ -65,6 +65,7 @@ global_kubeconfig = "/home/user/.kube/config"
 default_address = "0.0.0.0"
 
 [[context]]
+# The `name` field selects the kubeconfig context (like `kubectl --context`)
 name = "kind-local"
 kubeconfig = "/path/to/kubeconfig"
 # address = "127.0.0.1" # optional per context
