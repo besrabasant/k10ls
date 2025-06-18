@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/logrusorgru/aurora/v4"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -81,7 +82,7 @@ func computeAddress(entryAddr, ctxAddr, globalAddr string) string {
 }
 
 func Portforward(ctx *Context, config *Config) {
-	logrus.Infof("Processing context: %s", ctx.Name)
+	logrus.Infof("%s: %s", aurora.Yellow("Processing context"), aurora.Bold(aurora.Cyan(ctx.Name)))
 
 	if ctx.Namespace == "" {
 		ctx.Namespace = "default"
@@ -234,9 +235,9 @@ func startPortForward(cfg *rest.Config, contextName, namespace, podName, address
 
 	go func() {
 		<-readyCh
-		logrus.Infof("Started port-forward for pod %s on %v", podName, ports)
+		logrus.Info(aurora.Green(aurora.Sprintf("Started port-forward for pod %s on %v", aurora.Yellow(aurora.Bold(podName)), aurora.Cyan(aurora.Bold(ports)))))
 		equiv := fmt.Sprintf("kubectl --context %s -n %s port-forward pod/%s %s --address %s", contextName, namespace, podName, strings.Join(ports, " "), address)
-		logrus.Infof("Equivalent kubectl command: %s", equiv)
+		logrus.Info(aurora.Yellow(aurora.Sprintf("Equivalent kubectl command: %s", aurora.Cyan(equiv))))
 	}()
 
 	err = pf.ForwardPorts()
