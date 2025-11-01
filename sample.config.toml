@@ -12,6 +12,7 @@ namespace = "default"
 [[context.svc]]
 name = "mqtt"
 # address = "127.0.0.1" # optional per-service
+# Reminder: `source` is the pod port, `target` is the local port
 ports = [
   { source = "8883", target = "8883" },
   { source = "1883", target = "1883" }
