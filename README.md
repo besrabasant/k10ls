@@ -2,6 +2,12 @@
 
 k10ls is a friendly command-line tool that keeps network tunnels open to your Kubernetes workloads. It talks directly to the Kubernetes API (no `kubectl` subprocess) so it works reliably inside scripts and automation. Point k10ls at your clusters, list the Services or Pods you care about, and it continuously maintains the port-forwards for you.
 
+✅ **Forwards ports for Pods & Services**  
+✅ **Resolves services to pods automatically**  
+✅ **Runs natively with the Kubernetes API** (no `kubectl` subprocess)  
+✅ **Supports multiple contexts & configurations**  
+✅ **Written in Go** for lightweight execution  
+
 ---
 
 ## Installation
