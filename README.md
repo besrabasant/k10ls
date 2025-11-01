@@ -82,9 +82,11 @@ The table below explains every option in plain English. Each row also links to a
 | `[[context.label-selectors]]` | Label selector | Forwards the first Pod that matches the given Kubernetes label selector. | [Example](#label-selector-example) |
 | `name` | Service/Pod | Name of the Service or Pod to forward. | [Example](#service-forward-example) |
 | `label` | Label selector | The label query used to find matching pods (e.g. `app=api`). | [Example](#label-selector-example) |
-| `ports` | Service/Pod/Selector | List of port mappings. Each item has a `source` (local) and `target` (pod) port. | [Example](#port-mappings-example) |
+| `ports` | Service/Pod/Selector | List of port mappings. Each item pairs a pod port in `source` with a local machine port in `target`. | [Example](#port-mappings-example) |
 | `namespace` | Resource | Optional override of the namespace for this Service/Pod/Selector. | [Example](#resource-namespace-example) |
 | `address` | Resource | Optional override of the bind address for this Service/Pod/Selector. | [Example](#resource-address-example) |
+
+> **Port mapping terminology**: For historical reasons the TOML uses `source` for the pod (remote) port and `target` for the local port on your machine. k10ls automatically flips the values when it establishes the tunnel, so you still access pods using the familiar `local:remote` layout. For example, `ports = [{ source = "80", target = "8080" }]` exposes pod port `80` on your laptop at `8080`.
 
 ### Field examples
 Below are concise snippets that demonstrate how each field is used.
@@ -174,11 +176,11 @@ The first Pod with the label `app=worker` will be forwarded. k10ls will restart 
 #### Port mappings example
 ```toml
 ports = [
-  { source = "9000", target = "8080" },
-  { source = "9001", target = "9090" }
+  { source = "80", target = "8080" },
+  { source = "443", target = "9443" }
 ]
 ```
-Each mapping describes `local:remote`. The local machine listens on `9000` and sends traffic to port `8080` inside the pod, and so on.
+Each mapping describes `pod_port -> local_port`. Because of historical naming, `source` refers to the port inside the pod and `target` is the port exposed on your machine. In the example above, the pod's port `80` is available locally on `8080`, and pod port `443` is on `9443`.
 
 #### Resource namespace example
 ```toml
@@ -212,13 +214,13 @@ name = "kind-local"
 
   [[context.svc]]
   name = "web"
-  ports = [ { source = "8080", target = "80" } ]
+  ports = [ { source = "80", target = "8080" } ]
 ```
 Run it with:
 ```sh
 k10ls --config config.toml
 ```
-You can now open `http://127.0.0.1:8080` in your browser.
+You can now open `http://127.0.0.1:8080` in your browser, which reaches port `80` on the pod. Remember: `target` is the port you listen on locally, while `source` points at the pod.
 
 ### Multiple contexts and overrides
 ```toml
@@ -247,13 +249,13 @@ kubeconfig = "/opt/configs/prod-kubeconfig"
   name = "api-0"
   namespace = "backend"
   address = "0.0.0.0"
-  ports = [ { source = "9000", target = "8080" } ]
+  ports = [ { source = "8080", target = "9000" } ]
 
   [[context.label-selectors]]
   label = "app=worker"
   ports = [ { source = "9090", target = "9090" } ]
 ```
-This configuration keeps tunnels open to two clusters. Notice how the prod pod overrides both the namespace and address.
+This configuration keeps tunnels open to two clusters. Notice how the prod pod overrides both the namespace and address, and exposes the pod's port `8080` on your machine at `9000`.
 
 ---
 
@@ -290,7 +292,7 @@ If you are developing k10ls, these Makefile helpers can speed things up:
 ---
 
 ## Troubleshooting tips
-- **Port already in use** – choose a different `source` port or free the port with tools like `lsof -i :8080`.
+- **Port already in use** – choose a different `target` port (the port on your machine) or free it with tools like `lsof -i :8080`.
 - **Authentication errors** – double-check the `kubeconfig` paths and context names. Running `kubectl --context <name> get pods` is a quick sanity check.
 - **No pods found** – ensure the Service has selectors or the label selector matches existing pods.
 
