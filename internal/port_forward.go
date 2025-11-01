@@ -62,7 +62,9 @@ type Selector struct {
 	Address   string    `toml:"address,omitempty"`
 }
 
-// PortMap represents a port-forward mapping (source -> target)
+// PortMap represents a port-forward mapping (source -> target).
+// Note: the configuration labels `source` and `target` are inverted compared to the
+// Kubernetes port-forward CLI semantics, so the code compensates for that here.
 type PortMap struct {
 	Source string `toml:"source"`
 	Target string `toml:"target"`
@@ -206,7 +208,7 @@ func portForwardLabel(clientset *kubernetes.Clientset, cfg *rest.Config, context
 func maintainPortForward(cfg *rest.Config, contextName, namespace, podName string, ports []PortMap, address string) {
 	portArgs := make([]string, len(ports))
 	for i, p := range ports {
-		portArgs[i] = fmt.Sprintf("%s:%s", p.Source, p.Target)
+		portArgs[i] = fmt.Sprintf("%s:%s", p.Target, p.Source)
 	}
 	for {
 		if err := startPortForward(cfg, contextName, namespace, podName, address, portArgs); err != nil {
