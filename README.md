@@ -223,7 +223,7 @@ Run it with:
 ```sh
 k10ls --config config.toml
 ```
-You can now open `http://127.0.0.1:8080` in your browser, which reaches port `80` on the pod. Remember: `target` is the port on your host machine, while `source` points at the pod.
+You can now open `http://127.0.0.1:8080` in your browser, which reaches port `80` on the pod; in this mapping `target` denotes the port on your host machine while `source` points at the pod.
 
 ### Multiple contexts and overrides
 ```toml
