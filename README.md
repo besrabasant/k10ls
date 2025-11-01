@@ -214,13 +214,16 @@ name = "kind-local"
 
   [[context.svc]]
   name = "web"
-  ports = [ { source = "80", target = "8080" } ]
+  ports = [
+    # source -> pod port, target -> port exposed on your machine
+    { source = "80", target = "8080" }
+  ]
 ```
 Run it with:
 ```sh
 k10ls --config config.toml
 ```
-You can now open `http://127.0.0.1:8080` in your browser, which reaches port `80` on the pod. Remember: `target` is the port you listen on locally, while `source` points at the pod.
+You can now open `http://127.0.0.1:8080` in your browser, which reaches port `80` on the pod. Remember: `target` is the port on your host machine, while `source` points at the pod.
 
 ### Multiple contexts and overrides
 ```toml
@@ -236,6 +239,7 @@ namespace = "demo"
   [[context.svc]]
   name = "mqtt"
   ports = [
+    # Each entry is pod source port -> host target port
     { source = "1883", target = "1883" },
     { source = "8883", target = "8883" }
   ]
